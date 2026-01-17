@@ -97,6 +97,7 @@ export default function Dashboard() {
     dealstage: deal.properties.dealstage,
     amount: parseFloat(deal.properties.amount || '0'),
     closedate: deal.properties.closedate,
+    createdate: deal.properties.createdate,
     hs_deal_stage_probability: parseFloat(deal.properties.hs_deal_stage_probability || '0'),
   }));
 

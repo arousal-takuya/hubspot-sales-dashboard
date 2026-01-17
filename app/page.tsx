@@ -5,9 +5,11 @@ import MetricCard from './components/MetricCard';
 import PipelineFunnel from './components/PipelineFunnel';
 import DealsTable from './components/DealsTable';
 import { formatCurrency } from './lib/analytics';
-import { LayoutDashboard, TrendingUp, AlertTriangle, Target, Sparkles } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, AlertTriangle, Target, Sparkles, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [metrics, setMetrics] = useState<any>(null);
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,16 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -108,9 +120,19 @@ export default function Dashboard() {
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-green-700">Live</span>
               </div>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg"
+              >
                 <Sparkles className="w-4 h-4 inline mr-2" />
                 Refresh
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition shadow-md hover:shadow-lg"
+              >
+                <LogOut className="w-4 h-4 inline mr-2" />
+                ログアウト
               </button>
             </div>
           </div>

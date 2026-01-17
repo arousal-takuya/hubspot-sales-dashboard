@@ -6,6 +6,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { username, password } = body;
 
+    console.log('Login attempt:', { username, hasPassword: !!password });
+    console.log('Environment check:', {
+      hasUsername: !!process.env.DASHBOARD_USERNAME,
+      hasPassword: !!process.env.DASHBOARD_PASSWORD,
+    });
+
     if (!username || !password) {
       return NextResponse.json(
         { error: 'Username and password are required' },
@@ -16,6 +22,7 @@ export async function POST(request: NextRequest) {
     const isValid = await validateCredentials({ username, password });
 
     if (!isValid) {
+      console.log('Invalid credentials provided');
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -23,6 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     await createSession();
+    console.log('Login successful');
 
     return NextResponse.json({ success: true });
   } catch (error) {

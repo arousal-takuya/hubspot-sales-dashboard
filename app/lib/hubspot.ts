@@ -38,25 +38,46 @@ export async function getAllDeals(limit: number = 100): Promise<HubSpotDeal[]> {
       'hs_is_closed_lost',
     ];
 
-    const url = `${HUBSPOT_API_BASE}/crm/v3/objects/deals?limit=${limit}&properties=${properties.join(',')}`;
+    let allDeals: HubSpotDeal[] = [];
+    let after: string | undefined = undefined;
+    let hasMore = true;
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    // ページネーションで全てのDealを取得
+    while (hasMore) {
+      const url: string = `${HUBSPOT_API_BASE}/crm/v3/objects/deals?limit=${limit}&properties=${properties.join(',')}${after ? `&after=${after}` : ''}`;
 
-    if (!response.ok) {
-      throw new Error(`HubSpot API error: ${response.status} ${response.statusText}`);
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HubSpot API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const deals = data.results.map((deal: any) => ({
+        id: deal.id,
+        properties: deal.properties,
+      }));
+
+      allDeals = [...allDeals, ...deals];
+
+      // 次のページがあるかチェック
+      if (data.paging && data.paging.next && data.paging.next.after) {
+        after = data.paging.next.after;
+      } else {
+        hasMore = false;
+      }
+
+      console.log(`Fetched ${deals.length} deals. Total so far: ${allDeals.length}`);
     }
 
-    const data = await response.json();
-
-    return data.results.map((deal: any) => ({
-      id: deal.id,
-      properties: deal.properties,
-    }));
+    console.log(`Total deals fetched: ${allDeals.length}`);
+    return allDeals;
   } catch (error) {
     console.error('Error fetching deals from HubSpot:', error);
     throw error;

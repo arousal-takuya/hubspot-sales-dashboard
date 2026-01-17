@@ -54,9 +54,8 @@ export function calculatePipelineFunnel(
   deals: HubSpotDeal[],
   stages: Array<{ id: string; label: string; displayOrder: number }>
 ): PipelineFunnelData[] {
-  const openDeals = deals.filter(
-    deal => deal.properties.hs_is_closed === 'false' || !deal.properties.hs_is_closed
-  );
+  // オープン案件のみでなく、全案件を集計対象にする
+  // これにより、クローズ済み案件も含めてパイプラインの全体像が見える
 
   // ステージごとに集計
   const stageCounts = new Map<string, { amount: number; count: number }>();
@@ -65,7 +64,7 @@ export function calculatePipelineFunnel(
     stageCounts.set(stage.id, { amount: 0, count: 0 });
   });
 
-  openDeals.forEach(deal => {
+  deals.forEach(deal => {
     const stageId = deal.properties.dealstage;
     const amount = parseFloat(deal.properties.amount || '0');
 

@@ -58,10 +58,10 @@ export default function DealsTable({ deals, stageLookup, dateFilter, onDateFilte
   };
 
   const getStageColor = (probability?: number) => {
-    if (!probability) return 'bg-slate-600';
-    if (probability >= 0.7) return 'bg-green-600';
-    if (probability >= 0.4) return 'bg-yellow-600';
-    return 'bg-orange-600';
+    if (!probability) return 'bg-gray-line';
+    if (probability >= 0.7) return 'bg-brand-sub';
+    if (probability >= 0.4) return 'bg-brand-gold';
+    return 'bg-brand-accent';
   };
 
   const getProbabilityLabel = (probability?: number) => {
@@ -122,129 +122,129 @@ export default function DealsTable({ deals, stageLookup, dateFilter, onDateFilte
   const hasMore = visibleCount < sortedDeals.length;
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden shadow-md">
-      <div className="px-6 py-4 border-b border-blue-100 flex items-center justify-between flex-wrap gap-4">
-        <h3 className="text-lg font-bold text-slate-900">案件一覧 (AI監査済み)</h3>
-        <span className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-medium">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-line">
+      <div className="px-6 py-4 border-b border-gray-light flex items-center justify-between flex-wrap gap-4">
+        <h3 className="text-lg font-bold text-gray-main">案件一覧 (AI監査済み)</h3>
+        <span className="px-3 py-1 text-xs bg-brand-sub text-white rounded-lg font-medium">
           表示中: {visibleDeals.length}件 / 全{deals.length}件
         </span>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gradient-to-r from-blue-50 to-white">
+          <thead className="bg-gray-light/50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('dealname')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   取引
                   {getSortIcon('dealname')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('dealstage')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   ステージ
                   {getSortIcon('dealstage')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('hs_deal_stage_probability')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   MEDDIC
                   {getSortIcon('hs_deal_stage_probability')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('amount')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   予算金額
                   {getSortIcon('amount')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 AI確度
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('createdate')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   作成日
                   {getSortIcon('createdate')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
                 <button
                   onClick={() => handleSort('closedate')}
-                  className="inline-flex items-center hover:text-blue-600 transition"
+                  className="inline-flex items-center hover:text-brand-main transition"
                 >
                   完了予定
                   {getSortIcon('closedate')}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-secondary uppercase tracking-wider">
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-blue-100">
+          <tbody className="divide-y divide-gray-light">
             {visibleDeals.map((deal) => (
-              <tr key={deal.id} className="hover:bg-blue-50/50 transition cursor-pointer">
+              <tr key={deal.id} className="hover:bg-gray-light/30 transition cursor-pointer">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 flex items-center justify-center">
-                      <span className="text-blue-600 text-xs font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-brand-support-light border border-brand-support-light flex items-center justify-center">
+                      <span className="text-brand-main text-xs font-bold">
                         {deal.dealname.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">{deal.dealname}</div>
+                      <div className="text-sm font-semibold text-gray-main">{deal.dealname}</div>
                       {deal.companyName && (
-                        <div className="text-xs text-slate-600">{deal.companyName}</div>
+                        <div className="text-xs text-gray-secondary">{deal.companyName}</div>
                       )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-lg bg-brand-support-light/50 text-brand-main border border-brand-support-light">
                     {stageLookup.get(deal.dealstage) || deal.dealstage}
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="w-full bg-slate-200 rounded-full h-2">
+                  <div className="w-full bg-gray-light rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${getStageColor(deal.hs_deal_stage_probability)}`}
                       style={{ width: `${(deal.hs_deal_stage_probability || 0) * 100}%` }}
                     />
                   </div>
-                  <span className="text-xs text-slate-600 mt-1 font-medium">
+                  <span className="text-xs text-gray-secondary mt-1 font-medium">
                     {getProbabilityLabel(deal.hs_deal_stage_probability)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-semibold text-gray-main">
                     {deal.amount ? formatCurrency(deal.amount) : '-'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`text-sm font-bold ${
-                    (deal.hs_deal_stage_probability || 0) >= 0.5 ? 'text-green-600' : 'text-yellow-600'
+                    (deal.hs_deal_stage_probability || 0) >= 0.5 ? 'text-brand-sub' : 'text-brand-gold'
                   }`}>
                     {getProbabilityLabel(deal.hs_deal_stage_probability)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-main font-medium">
                   {deal.createdate ? new Date(deal.createdate).toLocaleDateString('ja-JP') : '-'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-main font-medium">
                   {deal.closedate ? new Date(deal.closedate).toLocaleDateString('ja-JP') : '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -252,7 +252,7 @@ export default function DealsTable({ deals, stageLookup, dateFilter, onDateFilte
                     href={`https://app.hubspot.com/contacts/21080726/record/0-3/${deal.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-brand-sub hover:text-brand-main"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
@@ -264,10 +264,10 @@ export default function DealsTable({ deals, stageLookup, dateFilter, onDateFilte
       </div>
 
       {hasMore && (
-        <div className="px-6 py-4 border-t border-blue-100 text-center">
+        <div className="px-6 py-4 border-t border-gray-light text-center">
           <button
             onClick={() => setVisibleCount(prev => prev + 20)}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg inline-flex items-center gap-2"
+            className="px-4 py-2 bg-brand-main hover:bg-brand-support text-white rounded-lg font-medium transition shadow-md hover:shadow-lg inline-flex items-center gap-2"
           >
             さらに読み込む ({sortedDeals.length - visibleCount}件)
             <ChevronDown className="w-4 h-4" />

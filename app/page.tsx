@@ -211,9 +211,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center glass-card rounded-2xl p-8">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-700 font-medium">読み込み中...</p>
+        <div className="text-center bg-white rounded-2xl p-8 shadow-sm border border-gray-line">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-sub mx-auto mb-4"></div>
+          <p className="text-gray-main font-medium">読み込み中...</p>
         </div>
       </div>
     );
@@ -222,14 +222,14 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-card rounded-2xl p-8 max-w-md">
+        <div className="bg-white rounded-2xl p-8 max-w-md shadow-sm border border-gray-line">
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+            <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-brand-accent" />
             </div>
-            <h2 className="text-red-600 text-xl font-bold mb-2">エラーが発生しました</h2>
-            <p className="text-slate-700 mb-4">{error}</p>
-            <p className="text-slate-500 text-sm">
+            <h2 className="text-brand-accent text-xl font-bold mb-2">エラーが発生しました</h2>
+            <p className="text-gray-main mb-4">{error}</p>
+            <p className="text-gray-secondary text-sm">
               .env.localファイルにHUBSPOT_ACCESS_TOKENが設定されているか確認してください。
             </p>
           </div>
@@ -241,40 +241,40 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen pb-12">
       {/* Header */}
-      <header className="glass-card border-b border-white/20 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-light sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-brand-main to-brand-sub rounded-xl flex items-center justify-center shadow-lg">
                 <LayoutDashboard className="w-7 h-7 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold gradient-text">HubSpot Sales Dashboard</h1>
-                <p className="text-sm text-slate-600">Evidence-Based Sales Intelligence</p>
+                <p className="text-sm text-gray-secondary">Evidence-Based Sales Intelligence</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">Live</span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-brand-sub/10 border border-brand-sub/20 rounded-full">
+                <div className="w-2 h-2 bg-brand-sub rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-brand-sub">Live</span>
               </div>
               <Link
                 href="/planning"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg flex items-center gap-2"
+                className="px-4 py-2 bg-brand-sub hover:bg-brand-sub/90 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg flex items-center gap-2"
               >
                 <Target className="w-4 h-4" />
                 事業計画
               </Link>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg"
+                className="px-4 py-2 bg-brand-main hover:bg-brand-support text-white rounded-lg font-medium transition shadow-md hover:shadow-lg"
               >
                 <Sparkles className="w-4 h-4 inline mr-2" />
                 Refresh
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition shadow-md hover:shadow-lg"
+                className="px-4 py-2 bg-gray-light hover:bg-brand-support-light text-gray-main rounded-lg font-medium transition shadow-md hover:shadow-lg"
               >
                 <LogOut className="w-4 h-4 inline mr-2" />
                 ログアウト
@@ -289,8 +289,8 @@ export default function Dashboard() {
         {/* Page Title with Filter */}
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">営業ダッシュボード</h2>
-            <p className="text-slate-600">
+            <h2 className="text-3xl font-bold text-gray-main mb-2">営業ダッシュボード</h2>
+            <p className="text-gray-secondary">
               最終更新: {new Date().toLocaleDateString('ja-JP', {
                 year: 'numeric',
                 month: 'long',
@@ -301,11 +301,11 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-slate-600" />
+            <Calendar className="w-5 h-5 text-gray-secondary" />
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 text-sm bg-white border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              className="px-4 py-2 text-sm bg-white border border-gray-line text-gray-main rounded-lg font-medium hover:bg-gray-light transition focus:outline-none focus:ring-2 focus:ring-brand-sub shadow-sm"
             >
               <option value="all">全期間 ({transformedDeals.length}件)</option>
               <option value="7days">過去7日間</option>
@@ -315,7 +315,7 @@ export default function Dashboard() {
               <option value="1year">過去1年間</option>
             </select>
             {dateFilter !== 'all' && (
-              <span className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-medium">
+              <span className="px-3 py-1 text-xs bg-brand-sub text-white rounded-lg font-medium">
                 {filteredDeals.length}件表示中
               </span>
             )}
@@ -365,42 +365,42 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             {filteredFunnelData.length > 0 && <PipelineFunnel data={filteredFunnelData} />}
           </div>
-          <div className="glass-card rounded-2xl p-6 shadow-md">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-line">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900">Micro-Agents</h3>
-              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+              <h3 className="text-lg font-bold text-gray-main">Micro-Agents</h3>
+              <span className="px-3 py-1 bg-brand-sub/10 text-brand-sub text-xs font-semibold rounded-full border border-brand-sub/20">
                 {filteredDeals.length}/{transformedDeals.length} Active
               </span>
             </div>
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border border-blue-100">
+              <div className="bg-brand-support-light/30 rounded-xl p-4 border border-brand-support-light">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-                  <span className="text-sm font-semibold text-slate-900">Gem_01</span>
-                  <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">稼働中</span>
+                  <div className="w-3 h-3 bg-brand-sub rounded-full animate-pulse shadow-lg shadow-brand-sub/50"></div>
+                  <span className="text-sm font-semibold text-gray-main">Gem_01</span>
+                  <span className="ml-auto px-2 py-0.5 bg-brand-sub/10 text-brand-sub text-xs rounded-full font-medium">稼働中</span>
                 </div>
-                <p className="text-xs text-slate-600 font-medium">ファクト収集エージェント</p>
-                <p className="text-xs text-slate-500 mt-1">ゴール: 重要客からエビデンスを自動抽出</p>
+                <p className="text-xs text-gray-main font-medium">ファクト収集エージェント</p>
+                <p className="text-xs text-gray-secondary mt-1">ゴール: 重要客からエビデンスを自動抽出</p>
               </div>
 
-              <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border border-blue-100">
+              <div className="bg-brand-support-light/30 rounded-xl p-4 border border-brand-support-light">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-                  <span className="text-sm font-semibold text-slate-900">Gem_02</span>
-                  <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">稼働中</span>
+                  <div className="w-3 h-3 bg-brand-sub rounded-full animate-pulse shadow-lg shadow-brand-sub/50"></div>
+                  <span className="text-sm font-semibold text-gray-main">Gem_02</span>
+                  <span className="ml-auto px-2 py-0.5 bg-brand-sub/10 text-brand-sub text-xs rounded-full font-medium">稼働中</span>
                 </div>
-                <p className="text-xs text-slate-600 font-medium">競合監査エージェント</p>
-                <p className="text-xs text-slate-500 mt-1">担当者手当とエビデンスベースで検証</p>
+                <p className="text-xs text-gray-main font-medium">競合監査エージェント</p>
+                <p className="text-xs text-gray-secondary mt-1">担当者手当とエビデンスベースで検証</p>
               </div>
 
-              <div className="bg-gradient-to-r from-yellow-50 to-white rounded-xl p-4 border border-yellow-100">
+              <div className="bg-brand-gold/10 rounded-xl p-4 border border-brand-gold/30">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse shadow-lg shadow-yellow-500/50"></div>
-                  <span className="text-sm font-semibold text-slate-900">Gem_03</span>
-                  <span className="ml-auto px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">処理中</span>
+                  <div className="w-3 h-3 bg-brand-gold rounded-full animate-pulse shadow-lg shadow-brand-gold/50"></div>
+                  <span className="text-sm font-semibold text-gray-main">Gem_03</span>
+                  <span className="ml-auto px-2 py-0.5 bg-brand-gold/20 text-brand-gold text-xs rounded-full font-medium">処理中</span>
                 </div>
-                <p className="text-xs text-slate-600 font-medium">停滞案件エージェント</p>
-                <p className="text-xs text-slate-500 mt-1">7日以上の進捗停滞を自動検知</p>
+                <p className="text-xs text-gray-main font-medium">停滞案件エージェント</p>
+                <p className="text-xs text-gray-secondary mt-1">7日以上の進捗停滞を自動検知</p>
               </div>
             </div>
           </div>
@@ -419,9 +419,9 @@ export default function Dashboard() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-12 glass-card border-t border-white/20">
+      <footer className="mt-12 bg-white border-t border-gray-light">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <p className="text-center text-sm text-slate-600">
+          <p className="text-center text-sm text-gray-secondary">
             Powered by HubSpot API · Built with Next.js & Vercel
           </p>
         </div>

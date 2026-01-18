@@ -65,44 +65,44 @@ export default function LoginPage() {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
+        <div className="animate-spin h-8 w-8 border-4 border-brand-sub border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-main to-brand-sub rounded-2xl shadow-lg mb-4">
             <LayoutDashboard className="w-9 h-9 text-white" />
           </div>
           <h1 className="text-3xl font-bold gradient-text mb-2">
             HubSpot Sales Dashboard
           </h1>
-          <p className="text-slate-600">ダッシュボードにアクセスするにはログインしてください</p>
+          <p className="text-gray-secondary">ダッシュボードにアクセスするにはログインしてください</p>
         </div>
 
         {/* Login Form */}
-        <div className="glass-card rounded-2xl p-8 shadow-xl">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-line">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Input */}
             <div>
-              <label htmlFor="username" className="block text-sm font-semibold text-slate-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-main mb-2">
                 ユーザー名
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" />
+                  <User className="h-5 w-5 text-gray-line" />
                 </div>
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-400"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-line rounded-lg focus:ring-2 focus:ring-brand-sub focus:border-brand-sub bg-white text-gray-main placeholder-gray-line"
                   placeholder="ユーザー名を入力"
                   required
                   disabled={loading}
@@ -112,19 +112,19 @@ export default function LoginPage() {
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-main mb-2">
                 パスワード
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
+                  <Lock className="h-5 w-5 text-gray-line" />
                 </div>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-400"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-line rounded-lg focus:ring-2 focus:ring-brand-sub focus:border-brand-sub bg-white text-gray-main placeholder-gray-line"
                   placeholder="パスワードを入力"
                   required
                   disabled={loading}
@@ -139,19 +139,19 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                className="h-4 w-4 text-brand-sub border-gray-line rounded focus:ring-brand-sub cursor-pointer"
                 disabled={loading}
               />
-              <label htmlFor="rememberMe" className="ml-2 block text-sm text-slate-700 cursor-pointer">
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-main cursor-pointer">
                 ログイン情報を30日間保持する
               </label>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="bg-brand-accent/10 border border-brand-accent/20 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-brand-accent flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-brand-accent">{error}</p>
               </div>
             )}
 
@@ -159,7 +159,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-brand-main to-brand-support hover:from-brand-support hover:to-brand-main text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -177,7 +177,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-slate-500 mt-6">
+        <p className="text-center text-sm text-gray-secondary mt-6">
           Powered by HubSpot API · Built with Next.js & Vercel
         </p>
       </div>

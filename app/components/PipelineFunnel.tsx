@@ -12,24 +12,25 @@ interface PipelineFunnelProps {
   }>;
 }
 
+// ブランドカラーに合わせたステージカラー
 const STAGE_COLORS = [
-  '#3b82f6', // blue
-  '#06b6d4', // cyan
-  '#10b981', // green
-  '#84cc16', // lime
-  '#eab308', // yellow
-  '#f59e0b', // amber
-  '#ef4444', // red
+  '#00146E', // brand-main
+  '#0F2356', // brand-support
+  '#01B3EF', // brand-sub
+  '#C6AF80', // brand-gold
+  '#7F7F7F', // gray-secondary
+  '#B2B2B2', // gray-line
+  '#ED2F4F', // brand-accent
 ];
 
 // CustomTooltipをコンポーネント外部に移動してReact Error #310を回避
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border-2 border-blue-200 rounded-xl p-3 shadow-xl">
-        <p className="text-slate-900 font-semibold mb-1">{payload[0].payload.stage}</p>
-        <p className="text-slate-700 text-sm">金額: {formatCurrency(payload[0].value)}</p>
-        <p className="text-slate-600 text-xs mt-1">件数: {payload[0].payload.count}件</p>
+      <div className="bg-white border border-gray-line rounded-xl p-3 shadow-lg">
+        <p className="text-gray-main font-semibold mb-1">{payload[0].payload.stage}</p>
+        <p className="text-gray-main text-sm">金額: {formatCurrency(payload[0].value)}</p>
+        <p className="text-gray-secondary text-xs mt-1">件数: {payload[0].payload.count}件</p>
       </div>
     );
   }
@@ -66,8 +67,8 @@ export default function PipelineFunnel({ data }: PipelineFunnelProps) {
   }, [updateDimensions]);
 
   return (
-    <div className="glass-card rounded-2xl p-6 shadow-md">
-      <h3 className="text-lg font-bold text-slate-900 mb-4">パイプラインファネル</h3>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-line">
+      <h3 className="text-lg font-bold text-gray-main mb-4">パイプラインファネル</h3>
       <div ref={containerRef} style={{ width: '100%', height: 400 }}>
         {dimensions.width > 0 && (
           <BarChart
@@ -77,19 +78,19 @@ export default function PipelineFunnel({ data }: PipelineFunnelProps) {
             height={dimensions.height}
             margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
             <XAxis
               type="number"
-              stroke="#64748b"
+              stroke="#7F7F7F"
               tickFormatter={(value) => formatCurrency(value)}
             />
             <YAxis
               dataKey="stage"
               type="category"
-              stroke="#64748b"
+              stroke="#7F7F7F"
               width={90}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F5F5F5' }} />
             <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={STAGE_COLORS[index % STAGE_COLORS.length]} />
@@ -100,7 +101,7 @@ export default function PipelineFunnel({ data }: PipelineFunnelProps) {
       </div>
       <div className="flex justify-end gap-2 mt-4 text-xs">
         <div className="flex items-center gap-1">
-          <span className="text-slate-600 font-medium">ステージ別件数</span>
+          <span className="text-gray-secondary font-medium">ステージ別件数</span>
         </div>
         {data.map((stage, index) => (
           <div key={index} className="flex items-center gap-1">
@@ -108,7 +109,7 @@ export default function PipelineFunnel({ data }: PipelineFunnelProps) {
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: STAGE_COLORS[index % STAGE_COLORS.length] }}
             />
-            <span className="text-slate-700 font-medium">{stage.count}</span>
+            <span className="text-gray-main font-medium">{stage.count}</span>
           </div>
         ))}
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import MetricCard from './components/MetricCard';
 import PipelineFunnel from './components/PipelineFunnel';
 import DealsTable from './components/DealsTable';
@@ -54,6 +54,30 @@ export default function Dashboard() {
     }
   };
 
+  // useMemoでstageLookupをメモ化してReact Error #310を回避
+  const stageLookup = useMemo(() => {
+    const lookup = new Map<string, string>();
+    if (metrics?.funnelData) {
+      metrics.funnelData.forEach((stage: any, index: number) => {
+        lookup.set(index.toString(), stage.stage);
+      });
+    }
+    return lookup;
+  }, [metrics?.funnelData]);
+
+  // useMemoでtransformedDealsをメモ化
+  const transformedDeals = useMemo(() => {
+    return deals.map((deal: any) => ({
+      id: deal.id,
+      dealname: deal.properties.dealname,
+      dealstage: deal.properties.dealstage,
+      amount: parseFloat(deal.properties.amount || '0'),
+      closedate: deal.properties.closedate,
+      createdate: deal.properties.createdate,
+      hs_deal_stage_probability: parseFloat(deal.properties.hs_deal_stage_probability || '0'),
+    }));
+  }, [deals]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -83,23 +107,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  const stageLookup = new Map<string, string>();
-  if (metrics?.funnelData) {
-    metrics.funnelData.forEach((stage: any, index: number) => {
-      stageLookup.set(index.toString(), stage.stage);
-    });
-  }
-
-  const transformedDeals = deals.map((deal: any) => ({
-    id: deal.id,
-    dealname: deal.properties.dealname,
-    dealstage: deal.properties.dealstage,
-    amount: parseFloat(deal.properties.amount || '0'),
-    closedate: deal.properties.closedate,
-    createdate: deal.properties.createdate,
-    hs_deal_stage_probability: parseFloat(deal.properties.hs_deal_stage_probability || '0'),
-  }));
 
   return (
     <div className="min-h-screen pb-12">
@@ -242,7 +249,7 @@ export default function Dashboard() {
         </div>
 
         {/* Deals Table */}
-        {deals.length > 0 && (
+        {transformedDeals.length > 0 && (
           <DealsTable deals={transformedDeals} stageLookup={stageLookup} />
         )}
       </main>

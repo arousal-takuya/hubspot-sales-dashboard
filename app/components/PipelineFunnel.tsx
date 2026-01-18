@@ -22,20 +22,21 @@ const STAGE_COLORS = [
   '#ef4444', // red
 ];
 
-export default function PipelineFunnel({ data }: PipelineFunnelProps) {
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white border-2 border-blue-200 rounded-xl p-3 shadow-xl">
-          <p className="text-slate-900 font-semibold mb-1">{payload[0].payload.stage}</p>
-          <p className="text-slate-700 text-sm">金額: {formatCurrency(payload[0].value)}</p>
-          <p className="text-slate-600 text-xs mt-1">件数: {payload[0].payload.count}件</p>
-        </div>
-      );
-    }
-    return null;
-  };
+// CustomTooltipをコンポーネント外部に移動してReact Error #310を回避
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border-2 border-blue-200 rounded-xl p-3 shadow-xl">
+        <p className="text-slate-900 font-semibold mb-1">{payload[0].payload.stage}</p>
+        <p className="text-slate-700 text-sm">金額: {formatCurrency(payload[0].value)}</p>
+        <p className="text-slate-600 text-xs mt-1">件数: {payload[0].payload.count}件</p>
+      </div>
+    );
+  }
+  return null;
+};
 
+export default function PipelineFunnel({ data }: PipelineFunnelProps) {
   return (
     <div className="glass-card rounded-2xl p-6 shadow-md">
       <h3 className="text-lg font-bold text-slate-900 mb-4">パイプラインファネル</h3>

@@ -28,30 +28,55 @@ export const DEFAULT_KGI: KGI = {
 };
 
 // -----------------------------------------------------
-// セグメント別デフォルト値
+// セグメント別デフォルト値（月毎ベース）
 // -----------------------------------------------------
 export const SEGMENT_DEFAULTS: Record<CustomerSegment, {
   targetRevenue: number;
+  // 月毎パラメータ
+  monthlyLeadCount: number;         // 月間商談数
   averageUnitPrice: number;
   conversionRate: number;
+  growthRate: number;               // 成長率 (1.2 = 120%)
   leadTimeMonths: number;
-  requiredDeals: number;
+  // スライダー範囲
+  ranges: {
+    leadCount: { min: number; max: number };
+    conversionRate: { min: number; max: number };
+    averageUnitPrice: { min: number; max: number };
+    growthRate: { min: number; max: number };
+  };
 }> = {
   SMB: {
     targetRevenue: 200_000_000,     // 2億円
-    averageUnitPrice: 3_000_000,    // 300万円
-    conversionRate: 0.05,           // 5%
+    // 月毎パラメータ
+    monthlyLeadCount: 30,           // 月間商談数（デフォルト30件）
+    averageUnitPrice: 3_000_000,    // 平均単価 300万円
+    conversionRate: 0.15,           // 成約率15%（デフォルト）
+    growthRate: 1.20,               // 成長率120%（デフォルト）
     leadTimeMonths: 2,
-    // 必要商談数 = 2億 / (5% × 300万) = 1,333.33 ≈ 1,334
-    requiredDeals: Math.ceil(200_000_000 / (0.05 * 3_000_000)),
+    // スライダー範囲
+    ranges: {
+      leadCount: { min: 10, max: 100 },
+      conversionRate: { min: 0.05, max: 0.30 },      // 5-30%
+      averageUnitPrice: { min: 1_000_000, max: 10_000_000 },  // 100-1000万
+      growthRate: { min: 1.00, max: 2.00 },          // 100-200%
+    },
   },
   ENT: {
     targetRevenue: 300_000_000,     // 3億円
-    averageUnitPrice: 20_000_000,   // 2,000万円
-    conversionRate: 0.10,           // 10%
+    // 月毎パラメータ
+    monthlyLeadCount: 30,           // 月間商談数（デフォルト30件）
+    averageUnitPrice: 20_000_000,   // 平均単価 2,000万円（デフォルト）
+    conversionRate: 0.15,           // 成約率15%（デフォルト）
+    growthRate: 1.20,               // 成長率120%（デフォルト）
     leadTimeMonths: 4,
-    // 必要商談数 = 3億 / (10% × 2000万) = 150
-    requiredDeals: Math.ceil(300_000_000 / (0.10 * 20_000_000)),
+    // スライダー範囲
+    ranges: {
+      leadCount: { min: 10, max: 100 },
+      conversionRate: { min: 0.05, max: 0.30 },      // 5-30%
+      averageUnitPrice: { min: 5_000_000, max: 100_000_000 },  // 500万-1億
+      growthRate: { min: 1.00, max: 2.00 },          // 100-200%
+    },
   },
 };
 
@@ -124,45 +149,77 @@ export const PRODUCT_CONFIGS: ProductConfig[] = [
 ];
 
 // -----------------------------------------------------
-// デフォルト売上方程式
+// 年間売上計算（成長率を考慮した12ヶ月累積）
 // -----------------------------------------------------
+const calculateAnnualRevenue = (monthlyRevenue: number, growthRate: number): number => {
+  // 成長率を月次に分解（年率を月次に変換）
+  const monthlyGrowthRate = Math.pow(growthRate, 1/12);
+  let total = 0;
+  for (let month = 0; month < 12; month++) {
+    total += monthlyRevenue * Math.pow(monthlyGrowthRate, month);
+  }
+  return Math.round(total);
+};
+
+// -----------------------------------------------------
+// デフォルト売上方程式（月毎ベース）
+// -----------------------------------------------------
+const smbMonthlyRevenue = SEGMENT_DEFAULTS.SMB.monthlyLeadCount * SEGMENT_DEFAULTS.SMB.conversionRate * SEGMENT_DEFAULTS.SMB.averageUnitPrice;
+const entMonthlyRevenue = SEGMENT_DEFAULTS.ENT.monthlyLeadCount * SEGMENT_DEFAULTS.ENT.conversionRate * SEGMENT_DEFAULTS.ENT.averageUnitPrice;
+
 export const DEFAULT_EQUATIONS: SalesEquation[] = [
   {
     id: 'eq-smb',
     segment: 'SMB',
-    leadCount: SEGMENT_DEFAULTS.SMB.requiredDeals,
+    // 月毎パラメータ
+    leadCount: SEGMENT_DEFAULTS.SMB.monthlyLeadCount,
     conversionRate: SEGMENT_DEFAULTS.SMB.conversionRate,
     averageUnitPrice: SEGMENT_DEFAULTS.SMB.averageUnitPrice,
+    growthRate: SEGMENT_DEFAULTS.SMB.growthRate,
     leadTimeMonths: SEGMENT_DEFAULTS.SMB.leadTimeMonths,
-    expectedDeals: Math.round(SEGMENT_DEFAULTS.SMB.requiredDeals * SEGMENT_DEFAULTS.SMB.conversionRate),
-    expectedRevenue: SEGMENT_DEFAULTS.SMB.targetRevenue,
+    // 計算結果
+    expectedDeals: Math.round(SEGMENT_DEFAULTS.SMB.monthlyLeadCount * SEGMENT_DEFAULTS.SMB.conversionRate),
+    expectedRevenue: smbMonthlyRevenue,
+    annualRevenue: calculateAnnualRevenue(smbMonthlyRevenue, SEGMENT_DEFAULTS.SMB.growthRate),
+    // スライダー範囲
+    ranges: SEGMENT_DEFAULTS.SMB.ranges,
+    // デフォルト値
     defaults: {
-      leadCount: SEGMENT_DEFAULTS.SMB.requiredDeals,
+      leadCount: SEGMENT_DEFAULTS.SMB.monthlyLeadCount,
       averageUnitPrice: SEGMENT_DEFAULTS.SMB.averageUnitPrice,
       conversionRate: SEGMENT_DEFAULTS.SMB.conversionRate,
+      growthRate: SEGMENT_DEFAULTS.SMB.growthRate,
       leadTimeMonths: SEGMENT_DEFAULTS.SMB.leadTimeMonths,
     },
   },
   {
     id: 'eq-ent',
     segment: 'ENT',
-    leadCount: SEGMENT_DEFAULTS.ENT.requiredDeals,
+    // 月毎パラメータ
+    leadCount: SEGMENT_DEFAULTS.ENT.monthlyLeadCount,
     conversionRate: SEGMENT_DEFAULTS.ENT.conversionRate,
     averageUnitPrice: SEGMENT_DEFAULTS.ENT.averageUnitPrice,
+    growthRate: SEGMENT_DEFAULTS.ENT.growthRate,
     leadTimeMonths: SEGMENT_DEFAULTS.ENT.leadTimeMonths,
-    expectedDeals: Math.round(SEGMENT_DEFAULTS.ENT.requiredDeals * SEGMENT_DEFAULTS.ENT.conversionRate),
-    expectedRevenue: SEGMENT_DEFAULTS.ENT.targetRevenue,
+    // 計算結果
+    expectedDeals: Math.round(SEGMENT_DEFAULTS.ENT.monthlyLeadCount * SEGMENT_DEFAULTS.ENT.conversionRate),
+    expectedRevenue: entMonthlyRevenue,
+    annualRevenue: calculateAnnualRevenue(entMonthlyRevenue, SEGMENT_DEFAULTS.ENT.growthRate),
+    // スライダー範囲
+    ranges: SEGMENT_DEFAULTS.ENT.ranges,
+    // デフォルト値
     defaults: {
-      leadCount: SEGMENT_DEFAULTS.ENT.requiredDeals,
+      leadCount: SEGMENT_DEFAULTS.ENT.monthlyLeadCount,
       averageUnitPrice: SEGMENT_DEFAULTS.ENT.averageUnitPrice,
       conversionRate: SEGMENT_DEFAULTS.ENT.conversionRate,
+      growthRate: SEGMENT_DEFAULTS.ENT.growthRate,
       leadTimeMonths: SEGMENT_DEFAULTS.ENT.leadTimeMonths,
     },
   },
 ];
 
 // -----------------------------------------------------
-// デフォルトKPIツリー
+// デフォルトKPIツリー（月毎ベース）
 // -----------------------------------------------------
 export const DEFAULT_KPIS: KPI[] = [
   // SMB売上KPI
@@ -170,8 +227,8 @@ export const DEFAULT_KPIS: KPI[] = [
     id: 'kpi-smb-revenue',
     parentId: 'kgi-fy2025',
     name: 'SMB売上',
-    description: 'SMBセグメントの年間売上',
-    formula: '商談数 × 成約率 × 平均単価',
+    description: 'SMBセグメントの年間売上（成長率込み）',
+    formula: '(月間商談数 × 成約率 × 平均単価) × 12ヶ月 × 成長率',
     targetValue: 200_000_000,
     actualValue: 0,
     unit: 'yen',
@@ -183,13 +240,13 @@ export const DEFAULT_KPIS: KPI[] = [
       {
         id: 'kpi-smb-deals',
         parentId: 'kpi-smb-revenue',
-        name: 'SMB商談数',
-        description: '年間獲得商談数',
-        formula: '目標売上 ÷ (成約率 × 平均単価)',
-        targetValue: SEGMENT_DEFAULTS.SMB.requiredDeals,
+        name: 'SMB月間商談数',
+        description: '月間獲得商談数',
+        formula: '月間の新規商談創出数',
+        targetValue: SEGMENT_DEFAULTS.SMB.monthlyLeadCount,
         actualValue: 0,
         unit: 'count',
-        weight: 50,
+        weight: 30,
         isFocusKPI: true,
         segment: 'SMB',
         linkedRiskIds: ['risk-deal-shortage'],
@@ -201,10 +258,10 @@ export const DEFAULT_KPIS: KPI[] = [
         name: 'SMB成約率',
         description: '商談からの成約率',
         formula: '成約数 ÷ 商談数',
-        targetValue: 5,
+        targetValue: 15,       // 15%
         actualValue: 0,
         unit: 'percentage',
-        weight: 30,
+        weight: 25,
         isFocusKPI: false,
         segment: 'SMB',
         linkedRiskIds: [],
@@ -219,10 +276,25 @@ export const DEFAULT_KPIS: KPI[] = [
         targetValue: 3_000_000,
         actualValue: 0,
         unit: 'yen',
-        weight: 20,
+        weight: 25,
         isFocusKPI: false,
         segment: 'SMB',
         linkedRiskIds: ['risk-price-decline'],
+        children: [],
+      },
+      {
+        id: 'kpi-smb-growth',
+        parentId: 'kpi-smb-revenue',
+        name: 'SMB成長率',
+        description: '前年対比成長率',
+        formula: '当年売上 ÷ 前年売上',
+        targetValue: 120,       // 120%
+        actualValue: 0,
+        unit: 'percentage',
+        weight: 20,
+        isFocusKPI: false,
+        segment: 'SMB',
+        linkedRiskIds: [],
         children: [],
       },
     ],
@@ -232,8 +304,8 @@ export const DEFAULT_KPIS: KPI[] = [
     id: 'kpi-ent-revenue',
     parentId: 'kgi-fy2025',
     name: 'ENT売上',
-    description: 'エンタープライズセグメントの年間売上',
-    formula: '商談数 × 成約率 × 平均単価',
+    description: 'エンタープライズセグメントの年間売上（成長率込み）',
+    formula: '(月間商談数 × 成約率 × 平均単価) × 12ヶ月 × 成長率',
     targetValue: 300_000_000,
     actualValue: 0,
     unit: 'yen',
@@ -245,13 +317,13 @@ export const DEFAULT_KPIS: KPI[] = [
       {
         id: 'kpi-ent-deals',
         parentId: 'kpi-ent-revenue',
-        name: 'ENT商談数',
-        description: '年間獲得商談数',
-        formula: '目標売上 ÷ (成約率 × 平均単価)',
-        targetValue: SEGMENT_DEFAULTS.ENT.requiredDeals,
+        name: 'ENT月間商談数',
+        description: '月間獲得商談数',
+        formula: '月間の新規商談創出数',
+        targetValue: SEGMENT_DEFAULTS.ENT.monthlyLeadCount,
         actualValue: 0,
         unit: 'count',
-        weight: 50,
+        weight: 30,
         isFocusKPI: true,
         segment: 'ENT',
         linkedRiskIds: ['risk-deal-shortage'],
@@ -263,10 +335,10 @@ export const DEFAULT_KPIS: KPI[] = [
         name: 'ENT成約率',
         description: '商談からの成約率',
         formula: '成約数 ÷ 商談数',
-        targetValue: 10,
+        targetValue: 15,       // 15%
         actualValue: 0,
         unit: 'percentage',
-        weight: 30,
+        weight: 25,
         isFocusKPI: false,
         segment: 'ENT',
         linkedRiskIds: [],
@@ -281,10 +353,25 @@ export const DEFAULT_KPIS: KPI[] = [
         targetValue: 20_000_000,
         actualValue: 0,
         unit: 'yen',
-        weight: 20,
+        weight: 25,
         isFocusKPI: false,
         segment: 'ENT',
         linkedRiskIds: ['risk-price-decline'],
+        children: [],
+      },
+      {
+        id: 'kpi-ent-growth',
+        parentId: 'kpi-ent-revenue',
+        name: 'ENT成長率',
+        description: '前年対比成長率',
+        formula: '当年売上 ÷ 前年売上',
+        targetValue: 120,       // 120%
+        actualValue: 0,
+        unit: 'percentage',
+        weight: 20,
+        isFocusKPI: false,
+        segment: 'ENT',
+        linkedRiskIds: [],
         children: [],
       },
     ],

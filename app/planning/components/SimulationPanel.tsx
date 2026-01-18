@@ -21,7 +21,7 @@ interface SimulationPanelProps {
   countermeasureProgress: Map<string, number>;
   onEquationChange: (
     equationId: string,
-    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice',
+    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice' | 'growthRate',
     value: number
   ) => void;
   onProgressChange: (countermeasureId: string, progress: number) => void;

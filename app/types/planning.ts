@@ -51,28 +51,39 @@ export interface KPI {
 }
 
 // -----------------------------------------------------
-// 売上方程式
+// 売上方程式（月毎ベース）
 // -----------------------------------------------------
 export interface SalesEquation {
   id: string;
   segment: CustomerSegment;
   productType?: ProductType;
 
-  // 方程式の各変数
-  leadCount: number;              // 商談数
+  // 方程式の各変数（月毎）
+  leadCount: number;              // 月間商談数
   conversionRate: number;         // 成約率 (0-1)
   averageUnitPrice: number;       // 平均単価（円）
+  growthRate: number;             // 成長率 (1.0 = 100%, 1.2 = 120%)
   leadTimeMonths: number;         // リードタイム（月）
 
   // 計算結果（派生）
-  expectedDeals: number;          // 予想成約件数
-  expectedRevenue: number;        // 予想売上
+  expectedDeals: number;          // 月間予想成約件数
+  expectedRevenue: number;        // 月間予想売上
+  annualRevenue: number;          // 年間予想売上（成長率込み）
+
+  // スライダー範囲設定
+  ranges: {
+    leadCount: { min: number; max: number };
+    conversionRate: { min: number; max: number };
+    averageUnitPrice: { min: number; max: number };
+    growthRate: { min: number; max: number };
+  };
 
   // デフォルト値（参照用）
   defaults: {
     leadCount: number;
     averageUnitPrice: number;
     conversionRate: number;
+    growthRate: number;
     leadTimeMonths: number;
   };
 }

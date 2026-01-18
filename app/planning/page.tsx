@@ -98,7 +98,7 @@ export default function PlanningDashboard() {
   // イベントハンドラ
   // -----------------------------------------------------
   const handleEquationChange = useCallback(
-    (equationId: string, field: 'leadCount' | 'conversionRate' | 'averageUnitPrice', value: number) => {
+    (equationId: string, field: 'leadCount' | 'conversionRate' | 'averageUnitPrice' | 'growthRate', value: number) => {
       setEquations((prev) =>
         prev.map((eq) =>
           eq.id === equationId ? updateEquation(eq, { [field]: value }) : eq
@@ -287,22 +287,34 @@ export default function PlanningDashboard() {
 
             {/* クイックサマリー */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-line">
-              <h3 className="text-lg font-bold text-gray-main mb-4">クイックサマリー</h3>
+              <h3 className="text-lg font-bold text-gray-main mb-4">クイックサマリー（月毎）</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-2 border-b border-gray-light">
-                  <span className="text-sm text-gray-secondary">SMB必要商談数</span>
+                  <span className="text-sm text-gray-secondary">SMB月間商談数</span>
                   <span className="text-sm font-bold text-gray-main">
-                    {SEGMENT_DEFAULTS.SMB.requiredDeals.toLocaleString()}件
+                    {SEGMENT_DEFAULTS.SMB.monthlyLeadCount.toLocaleString()}件/月
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-light">
-                  <span className="text-sm text-gray-secondary">ENT必要商談数</span>
+                  <span className="text-sm text-gray-secondary">ENT月間商談数</span>
                   <span className="text-sm font-bold text-gray-main">
-                    {SEGMENT_DEFAULTS.ENT.requiredDeals.toLocaleString()}件
+                    {SEGMENT_DEFAULTS.ENT.monthlyLeadCount.toLocaleString()}件/月
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-light">
-                  <span className="text-sm text-gray-secondary">予測売上合計</span>
+                  <span className="text-sm text-gray-secondary">SMB成長率</span>
+                  <span className="text-sm font-bold text-brand-gold">
+                    {(SEGMENT_DEFAULTS.SMB.growthRate * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-light">
+                  <span className="text-sm text-gray-secondary">ENT成長率</span>
+                  <span className="text-sm font-bold text-brand-gold">
+                    {(SEGMENT_DEFAULTS.ENT.growthRate * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-light">
+                  <span className="text-sm text-gray-secondary">年間予測売上</span>
                   <span className="text-sm font-bold text-brand-sub">
                     {formatCurrency(simulationResult?.projectedRevenue ?? totalProjectedRevenue).display}
                   </span>

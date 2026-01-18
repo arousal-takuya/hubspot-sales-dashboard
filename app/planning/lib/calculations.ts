@@ -17,23 +17,40 @@ import {
 import { SEGMENT_DEFAULTS, THRESHOLDS, CURRENCY_FORMAT } from './constants';
 
 // -----------------------------------------------------
-// 売上方程式計算
+// 売上方程式計算（月毎ベース）
 // -----------------------------------------------------
 
 /**
- * 売上方程式の計算
- * 売上 = 商談数 × 成約率 × 平均単価
+ * 年間売上計算（成長率を考慮した12ヶ月累積）
+ */
+export function calculateAnnualRevenue(monthlyRevenue: number, growthRate: number): number {
+  // 成長率を月次に分解（年率を月次に変換）
+  const monthlyGrowthRate = Math.pow(growthRate, 1/12);
+  let total = 0;
+  for (let month = 0; month < 12; month++) {
+    total += monthlyRevenue * Math.pow(monthlyGrowthRate, month);
+  }
+  return Math.round(total);
+}
+
+/**
+ * 売上方程式の計算（月毎ベース）
+ * 月間売上 = 商談数 × 成約率 × 平均単価
+ * 年間売上 = 月間売上の12ヶ月累積（成長率考慮）
  */
 export function calculateSalesEquation(equation: SalesEquation): {
   expectedDeals: number;
   expectedRevenue: number;
+  annualRevenue: number;
 } {
   const expectedDeals = equation.leadCount * equation.conversionRate;
   const expectedRevenue = expectedDeals * equation.averageUnitPrice;
+  const annualRevenue = calculateAnnualRevenue(expectedRevenue, equation.growthRate);
 
   return {
     expectedDeals: Math.round(expectedDeals * 10) / 10,
     expectedRevenue: Math.round(expectedRevenue),
+    annualRevenue,
   };
 }
 
@@ -65,18 +82,19 @@ export function calculateSegmentRequiredDeals(
 }
 
 /**
- * 売上方程式を更新して再計算
+ * 売上方程式を更新して再計算（成長率対応）
  */
 export function updateEquation(
   equation: SalesEquation,
-  updates: Partial<Pick<SalesEquation, 'leadCount' | 'conversionRate' | 'averageUnitPrice'>>
+  updates: Partial<Pick<SalesEquation, 'leadCount' | 'conversionRate' | 'averageUnitPrice' | 'growthRate'>>
 ): SalesEquation {
   const updated = { ...equation, ...updates };
-  const { expectedDeals, expectedRevenue } = calculateSalesEquation(updated);
+  const { expectedDeals, expectedRevenue, annualRevenue } = calculateSalesEquation(updated);
   return {
     ...updated,
     expectedDeals,
     expectedRevenue,
+    annualRevenue,
   };
 }
 
@@ -495,14 +513,33 @@ export function flattenKPIs(kpis: KPI[]): KPI[] {
 // -----------------------------------------------------
 
 /**
- * 売上方程式の合計売上を計算
+ * 売上方程式の月間合計売上を計算
  */
-export function calculateTotalRevenue(equations: SalesEquation[]): number {
+export function calculateTotalMonthlyRevenue(equations: SalesEquation[]): number {
   return equations.reduce((sum, eq) => sum + eq.expectedRevenue, 0);
 }
 
 /**
- * セグメント別の売上を計算
+ * 売上方程式の年間合計売上を計算（成長率込み）
+ */
+export function calculateTotalRevenue(equations: SalesEquation[]): number {
+  return equations.reduce((sum, eq) => sum + eq.annualRevenue, 0);
+}
+
+/**
+ * セグメント別の月間売上を計算
+ */
+export function calculateSegmentMonthlyRevenue(
+  equations: SalesEquation[],
+  segment: CustomerSegment
+): number {
+  return equations
+    .filter((eq) => eq.segment === segment)
+    .reduce((sum, eq) => sum + eq.expectedRevenue, 0);
+}
+
+/**
+ * セグメント別の年間売上を計算（成長率込み）
  */
 export function calculateSegmentRevenue(
   equations: SalesEquation[],
@@ -510,5 +547,5 @@ export function calculateSegmentRevenue(
 ): number {
   return equations
     .filter((eq) => eq.segment === segment)
-    .reduce((sum, eq) => sum + eq.expectedRevenue, 0);
+    .reduce((sum, eq) => sum + eq.annualRevenue, 0);
 }

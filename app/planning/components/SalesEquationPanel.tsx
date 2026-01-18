@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Calculator, Users, Percent, DollarSign, ArrowRight, Clock } from 'lucide-react';
+import { Calculator, Users, Percent, DollarSign, ArrowRight, Clock, TrendingUp, Calendar } from 'lucide-react';
 import { SalesEquation, CustomerSegment } from '@/app/types/planning';
 import { formatCurrency, formatPercent } from '../lib/calculations';
 
@@ -9,7 +9,7 @@ interface SalesEquationPanelProps {
   equations: SalesEquation[];
   onChange: (
     equationId: string,
-    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice',
+    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice' | 'growthRate',
     value: number
   ) => void;
   selectedSegment: CustomerSegment | 'all';
@@ -26,6 +26,10 @@ export default function SalesEquationPanel({
     ? equations
     : equations.filter((eq) => eq.segment === selectedSegment);
 
+  // 年間合計売上を計算
+  const totalAnnualRevenue = filteredEquations.reduce((sum, eq) => sum + eq.annualRevenue, 0);
+  const totalMonthlyRevenue = filteredEquations.reduce((sum, eq) => sum + eq.expectedRevenue, 0);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-line overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-light">
@@ -34,7 +38,7 @@ export default function SalesEquationPanel({
             <Calculator className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-main">売上方程式</h3>
+            <h3 className="text-lg font-bold text-gray-main">売上方程式（月毎）</h3>
             <p className="text-xs text-gray-secondary">スライダーを動かしてシミュレーション</p>
           </div>
         </div>
@@ -52,13 +56,19 @@ export default function SalesEquationPanel({
 
         {/* 合計 */}
         <div className="border-t border-gray-light pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-secondary font-medium">予測売上合計</span>
-            <span className="text-xl font-bold text-brand-sub">
-              {formatCurrency(
-                filteredEquations.reduce((sum, eq) => sum + eq.expectedRevenue, 0)
-              ).display}
-            </span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-gray-secondary mb-1">月間予測売上</div>
+              <div className="text-lg font-bold text-gray-main">
+                {formatCurrency(totalMonthlyRevenue).display}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-secondary mb-1">年間予測売上（成長率込み）</div>
+              <div className="text-xl font-bold text-brand-sub">
+                {formatCurrency(totalAnnualRevenue).display}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +80,7 @@ interface EquationCardProps {
   equation: SalesEquation;
   onChange: (
     equationId: string,
-    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice',
+    field: 'leadCount' | 'conversionRate' | 'averageUnitPrice' | 'growthRate',
     value: number
   ) => void;
   expanded: boolean;
@@ -79,20 +89,7 @@ interface EquationCardProps {
 function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
   const isSMB = equation.segment === 'SMB';
   const defaults = equation.defaults;
-
-  // スライダーの範囲を計算
-  const leadRange = {
-    min: Math.round(defaults.leadCount * 0.5),
-    max: Math.round(defaults.leadCount * 2),
-  };
-  const conversionRange = {
-    min: defaults.conversionRate * 0.5,
-    max: Math.min(defaults.conversionRate * 3, 0.5),
-  };
-  const priceRange = {
-    min: Math.round(defaults.averageUnitPrice * 0.5),
-    max: Math.round(defaults.averageUnitPrice * 2),
-  };
+  const ranges = equation.ranges;
 
   return (
     <div className="rounded-xl border border-gray-line bg-white transition-all">
@@ -107,7 +104,7 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
             }`}>
               {equation.segment}
             </span>
-            <span className="text-sm text-gray-main font-medium">売上方程式</span>
+            <span className="text-sm text-gray-main font-medium">売上方程式（月毎）</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-secondary">
             <Clock className="w-3.5 h-3.5" />
@@ -118,11 +115,11 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
 
       {/* 方程式表示 */}
       <div className="px-4 py-4">
-        <div className="flex items-center justify-center gap-2 text-sm mb-4">
+        <div className="flex items-center justify-center gap-2 text-sm mb-2">
           <div className="flex items-center gap-1 px-3 py-2 bg-gray-light rounded-lg">
             <Users className="w-4 h-4 text-gray-secondary" />
             <span className="text-gray-main font-medium">{equation.leadCount.toLocaleString()}</span>
-            <span className="text-gray-secondary">件</span>
+            <span className="text-gray-secondary">件/月</span>
           </div>
           <span className="text-gray-line">×</span>
           <div className="flex items-center gap-1 px-3 py-2 bg-gray-light rounded-lg">
@@ -134,14 +131,39 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
             <DollarSign className="w-4 h-4 text-gray-secondary" />
             <span className="text-gray-main font-medium">{formatCurrency(equation.averageUnitPrice).shortDisplay}</span>
           </div>
+        </div>
+
+        {/* 月間売上 */}
+        <div className="flex items-center justify-center gap-2 text-sm mb-4">
           <ArrowRight className="w-4 h-4 text-gray-line" />
           <div className={`flex items-center gap-1 px-4 py-2 rounded-lg ${
             isSMB ? 'bg-brand-sub/10' : 'bg-brand-main/10'
           }`}>
+            <Calendar className="w-4 h-4 text-gray-secondary" />
             <span className={`text-lg font-bold ${
               isSMB ? 'text-brand-sub' : 'text-brand-main'
             }`}>
               {formatCurrency(equation.expectedRevenue).display}
+            </span>
+            <span className="text-xs text-gray-secondary">/月</span>
+          </div>
+          <span className="text-gray-line">×</span>
+          <div className="flex items-center gap-1 px-3 py-2 bg-brand-gold/10 rounded-lg">
+            <TrendingUp className="w-4 h-4 text-brand-gold" />
+            <span className="text-brand-gold font-medium">{formatPercent(equation.growthRate * 100 - 100)}成長</span>
+          </div>
+        </div>
+
+        {/* 年間売上 */}
+        <div className="flex items-center justify-center mb-4">
+          <div className={`flex items-center gap-2 px-5 py-3 rounded-xl ${
+            isSMB ? 'bg-brand-sub/20' : 'bg-brand-main/20'
+          }`}>
+            <span className="text-xs text-gray-secondary">年間予測:</span>
+            <span className={`text-xl font-bold ${
+              isSMB ? 'text-brand-sub' : 'text-brand-main'
+            }`}>
+              {formatCurrency(equation.annualRevenue).display}
             </span>
           </div>
         </div>
@@ -150,11 +172,11 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
         <div className="space-y-4">
           {/* 商談数 */}
           <VariableSlider
-            label="商談数"
+            label="月間商談数"
             value={equation.leadCount}
-            min={leadRange.min}
-            max={leadRange.max}
-            step={10}
+            min={ranges.leadCount.min}
+            max={ranges.leadCount.max}
+            step={5}
             defaultValue={defaults.leadCount}
             unit="件"
             icon={Users}
@@ -166,9 +188,9 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
           <VariableSlider
             label="成約率"
             value={equation.conversionRate}
-            min={conversionRange.min}
-            max={conversionRange.max}
-            step={0.005}
+            min={ranges.conversionRate.min}
+            max={ranges.conversionRate.max}
+            step={0.01}
             defaultValue={defaults.conversionRate}
             unit="%"
             icon={Percent}
@@ -181,9 +203,9 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
           <VariableSlider
             label="平均単価"
             value={equation.averageUnitPrice}
-            min={priceRange.min}
-            max={priceRange.max}
-            step={100000}
+            min={ranges.averageUnitPrice.min}
+            max={ranges.averageUnitPrice.max}
+            step={isSMB ? 500000 : 5000000}
             defaultValue={defaults.averageUnitPrice}
             unit="円"
             icon={DollarSign}
@@ -191,25 +213,47 @@ function EquationCard({ equation, onChange, expanded }: EquationCardProps) {
             formatValue={(v) => formatCurrency(v).shortDisplay}
             onChange={(value) => onChange(equation.id, 'averageUnitPrice', value)}
           />
+
+          {/* 成長率 */}
+          <VariableSlider
+            label="成長率"
+            value={equation.growthRate}
+            min={ranges.growthRate.min}
+            max={ranges.growthRate.max}
+            step={0.05}
+            defaultValue={defaults.growthRate}
+            unit="%"
+            icon={TrendingUp}
+            isSMB={isSMB}
+            formatValue={(v) => `${(v * 100).toFixed(0)}%`}
+            onChange={(value) => onChange(equation.id, 'growthRate', value)}
+          />
         </div>
 
         {/* 結果サマリー */}
-        <div className="mt-4 pt-4 border-t border-gray-light grid grid-cols-2 gap-4">
+        <div className="mt-4 pt-4 border-t border-gray-light grid grid-cols-3 gap-4">
           <div>
-            <div className="text-xs text-gray-secondary">予測成約件数</div>
+            <div className="text-xs text-gray-secondary">月間成約件数</div>
             <div className="text-lg font-semibold text-gray-main">
               {equation.expectedDeals.toFixed(1)}
               <span className="text-sm text-gray-secondary ml-1">件</span>
             </div>
           </div>
           <div>
+            <div className="text-xs text-gray-secondary">年間成約件数</div>
+            <div className="text-lg font-semibold text-gray-main">
+              {(equation.expectedDeals * 12 * equation.growthRate).toFixed(0)}
+              <span className="text-sm text-gray-secondary ml-1">件</span>
+            </div>
+          </div>
+          <div>
             <div className="text-xs text-gray-secondary">デフォルト比</div>
             <div className={`text-lg font-semibold ${
-              equation.expectedRevenue >= defaults.leadCount * defaults.conversionRate * defaults.averageUnitPrice
+              equation.annualRevenue >= defaults.leadCount * defaults.conversionRate * defaults.averageUnitPrice * 12 * defaults.growthRate
                 ? 'text-brand-sub'
                 : 'text-brand-gold'
             }`}>
-              {((equation.expectedRevenue / (defaults.leadCount * defaults.conversionRate * defaults.averageUnitPrice)) * 100).toFixed(1)}%
+              {((equation.annualRevenue / (defaults.leadCount * defaults.conversionRate * defaults.averageUnitPrice * 12 * defaults.growthRate)) * 100).toFixed(0)}%
             </div>
           </div>
         </div>
@@ -264,7 +308,7 @@ function VariableSlider({
           <span className="text-sm font-medium text-gray-main">{displayValue}</span>
           {diffFromDefault !== 0 && (
             <span className={`text-xs ${diffFromDefault > 0 ? 'text-brand-sub' : 'text-brand-accent'}`}>
-              ({diffFromDefault > 0 ? '+' : ''}{diffPercent.toFixed(1)}%)
+              ({diffFromDefault > 0 ? '+' : ''}{diffPercent.toFixed(0)}%)
             </span>
           )}
         </div>

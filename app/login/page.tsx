@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LayoutDashboard, Lock, User, AlertCircle } from 'lucide-react';
 
@@ -8,8 +8,32 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // 保存された認証情報を読み込む
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        const response = await fetch('/api/auth/remember');
+        const data = await response.json();
+
+        if (data.hasRemembered) {
+          setUsername(data.username);
+          setPassword(data.password);
+          setRememberMe(true);
+        }
+      } catch (err) {
+        console.error('Failed to load remembered credentials:', err);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadRememberedCredentials();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +46,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
       if (response.ok) {
@@ -38,6 +62,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -98,6 +130,21 @@ export default function LoginPage() {
                   disabled={loading}
                 />
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                disabled={loading}
+              />
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-slate-700 cursor-pointer">
+                ログイン情報を30日間保持する
+              </label>
             </div>
 
             {/* Error Message */}

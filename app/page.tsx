@@ -5,7 +5,7 @@ import MetricCard from './components/MetricCard';
 import PipelineFunnel from './components/PipelineFunnel';
 import DealsTable from './components/DealsTable';
 import { formatCurrency } from './lib/analytics';
-import { LayoutDashboard, TrendingUp, AlertTriangle, Target, Sparkles, LogOut } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Sparkles, LogOut, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<string>('all');
 
   useEffect(() => {
     async function fetchData() {
@@ -57,13 +58,13 @@ export default function Dashboard() {
   // useMemoでstageLookupをメモ化してReact Error #310を回避
   const stageLookup = useMemo(() => {
     const lookup = new Map<string, string>();
-    if (metrics?.funnelData) {
-      metrics.funnelData.forEach((stage: any, index: number) => {
-        lookup.set(index.toString(), stage.stage);
+    if (metrics?.stageLookup) {
+      Object.entries(metrics.stageLookup).forEach(([id, label]) => {
+        lookup.set(id, label as string);
       });
     }
     return lookup;
-  }, [metrics?.funnelData]);
+  }, [metrics?.stageLookup]);
 
   // useMemoでtransformedDealsをメモ化
   const transformedDeals = useMemo(() => {
@@ -75,8 +76,136 @@ export default function Dashboard() {
       closedate: deal.properties.closedate,
       createdate: deal.properties.createdate,
       hs_deal_stage_probability: parseFloat(deal.properties.hs_deal_stage_probability || '0'),
+      hs_lastmodifieddate: deal.properties.hs_lastmodifieddate,
+      hs_is_closed: deal.properties.hs_is_closed,
     }));
   }, [deals]);
+
+  // 日付フィルターでフィルタリングされたDeals
+  const filteredDeals = useMemo(() => {
+    if (dateFilter === 'all') return transformedDeals;
+
+    const now = new Date();
+    const filterDate = new Date();
+
+    switch (dateFilter) {
+      case '7days':
+        filterDate.setDate(now.getDate() - 7);
+        break;
+      case '30days':
+        filterDate.setDate(now.getDate() - 30);
+        break;
+      case '90days':
+        filterDate.setDate(now.getDate() - 90);
+        break;
+      case '180days':
+        filterDate.setDate(now.getDate() - 180);
+        break;
+      case '1year':
+        filterDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        return transformedDeals;
+    }
+
+    return transformedDeals.filter((deal) => {
+      if (!deal.createdate) return false;
+      const createDate = new Date(deal.createdate);
+      return createDate >= filterDate;
+    });
+  }, [transformedDeals, dateFilter]);
+
+  // フィルタリングされたDealsに基づくメトリクスを計算
+  const filteredMetrics = useMemo(() => {
+    if (!metrics) return null;
+
+    const openDeals = filteredDeals.filter(
+      deal => deal.hs_is_closed === 'false' || !deal.hs_is_closed
+    );
+
+    // 担当者手当合計
+    const totalPipelineAmount = openDeals.reduce((sum, deal) => {
+      return sum + (deal.amount || 0);
+    }, 0);
+
+    // AI調査進予測（確度加重予測）
+    const forecastAmount = openDeals.reduce((sum, deal) => {
+      return sum + ((deal.amount || 0) * (deal.hs_deal_stage_probability || 0));
+    }, 0);
+
+    // 停滞案件（更新から7日以上経過）
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const staleDeals = openDeals.filter(deal => {
+      if (!deal.hs_lastmodifieddate) return false;
+      const lastModified = new Date(deal.hs_lastmodifieddate);
+      return lastModified < sevenDaysAgo;
+    }).length;
+
+    // 予選通過率
+    const totalDeals = filteredDeals.length;
+    const qualifiedDeals = filteredDeals.filter(deal => {
+      return (deal.hs_deal_stage_probability || 0) >= 0.5;
+    }).length;
+
+    const conversionRate = totalDeals > 0 ? (qualifiedDeals / totalDeals) * 100 : 0;
+
+    return {
+      totalPipelineAmount,
+      forecastAmount,
+      conversionRate,
+      staleDeals,
+      averageMeddicScore: metrics.metrics.averageMeddicScore,
+    };
+  }, [filteredDeals, metrics]);
+
+  // フィルタリングされたDealsに基づくファネルデータを計算
+  const filteredFunnelData = useMemo(() => {
+    if (!metrics?.stageLookup) return [];
+
+    // ステージごとに集計
+    const stageCounts = new Map<string, { amount: number; count: number; label: string }>();
+
+    // 初期化
+    Object.entries(metrics.stageLookup).forEach(([id, label]) => {
+      stageCounts.set(id, { amount: 0, count: 0, label: label as string });
+    });
+
+    // 集計
+    filteredDeals.forEach(deal => {
+      const stageId = deal.dealstage;
+      const amount = deal.amount || 0;
+
+      if (stageCounts.has(stageId)) {
+        const current = stageCounts.get(stageId)!;
+        current.amount += amount;
+        current.count += 1;
+      }
+    });
+
+    // 配列に変換（元のfunnelDataの順序を維持）
+    if (metrics.funnelData) {
+      return metrics.funnelData.map((originalStage: any) => {
+        // stageLookupから対応するstageIdを見つける
+        const stageId = Object.entries(metrics.stageLookup).find(
+          ([, label]) => label === originalStage.stage
+        )?.[0];
+
+        if (stageId && stageCounts.has(stageId)) {
+          const data = stageCounts.get(stageId)!;
+          return {
+            stage: originalStage.stage,
+            amount: data.amount,
+            count: data.count,
+          };
+        }
+        return { stage: originalStage.stage, amount: 0, count: 0 };
+      });
+    }
+
+    return [];
+  }, [filteredDeals, metrics]);
 
   if (loading) {
     return (
@@ -149,53 +278,74 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">営業ダッシュボード</h2>
-          <p className="text-slate-600">
-            最終更新: {new Date().toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })} JST
-          </p>
+        {/* Page Title with Filter */}
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-2">営業ダッシュボード</h2>
+            <p className="text-slate-600">
+              最終更新: {new Date().toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })} JST
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-slate-600" />
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-4 py-2 text-sm bg-white border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+            >
+              <option value="all">全期間 ({transformedDeals.length}件)</option>
+              <option value="7days">過去7日間</option>
+              <option value="30days">過去30日間</option>
+              <option value="90days">過去90日間</option>
+              <option value="180days">過去180日間</option>
+              <option value="1year">過去1年間</option>
+            </select>
+            {dateFilter !== 'all' && (
+              <span className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-medium">
+                {filteredDeals.length}件表示中
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Metrics Grid */}
-        {metrics && (
+        {filteredMetrics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <MetricCard
               title="担当者手当合計"
-              value={formatCurrency(metrics.metrics.totalPipelineAmount)}
+              value={formatCurrency(filteredMetrics.totalPipelineAmount)}
               subtitle="アクティブ案件の合計"
               variant="default"
             />
             <MetricCard
               title="AI調査進予測"
-              value={formatCurrency(metrics.metrics.forecastAmount)}
+              value={formatCurrency(filteredMetrics.forecastAmount)}
               subtitle="確度加重予測"
               variant="success"
               icon="check"
             />
             <MetricCard
               title="予選通過率"
-              value={`${metrics.metrics.conversionRate.toFixed(0)}%`}
+              value={`${filteredMetrics.conversionRate.toFixed(0)}%`}
               subtitle="通過率"
               variant="warning"
-              trend={-37}
             />
             <MetricCard
               title="停滞案件"
-              value={`${metrics.metrics.staleDeals}件`}
+              value={`${filteredMetrics.staleDeals}件`}
               subtitle="要対応"
               variant="danger"
               icon="alert"
             />
             <MetricCard
               title="平均MEDDICスコア"
-              value={metrics.metrics.averageMeddicScore}
+              value={filteredMetrics.averageMeddicScore}
               subtitle="全アクティブ案件"
               variant="default"
             />
@@ -205,13 +355,13 @@ export default function Dashboard() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-2">
-            {metrics?.funnelData && <PipelineFunnel data={metrics.funnelData} />}
+            {filteredFunnelData.length > 0 && <PipelineFunnel data={filteredFunnelData} />}
           </div>
           <div className="glass-card rounded-2xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">Micro-Agents</h3>
               <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full border border-green-200">
-                {deals.length}/{deals.length} Active
+                {filteredDeals.length}/{transformedDeals.length} Active
               </span>
             </div>
             <div className="space-y-4">
@@ -249,8 +399,14 @@ export default function Dashboard() {
         </div>
 
         {/* Deals Table */}
-        {transformedDeals.length > 0 && (
-          <DealsTable deals={transformedDeals} stageLookup={stageLookup} />
+        {filteredDeals.length > 0 && (
+          <DealsTable
+            deals={filteredDeals}
+            stageLookup={stageLookup}
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            totalDealsCount={transformedDeals.length}
+          />
         )}
       </main>
 

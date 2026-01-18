@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateCredentials, createSession } from '@/app/lib/auth';
+import { validateCredentials, createSession, saveRememberMe, clearRememberMe } from '@/app/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, rememberMe } = body;
 
     console.log('Login attempt:', { username, hasPassword: !!password });
     console.log('Environment check:', {
@@ -30,6 +30,14 @@ export async function POST(request: NextRequest) {
     }
 
     await createSession();
+
+    // Remember Me機能: チェックされている場合は認証情報を保存
+    if (rememberMe) {
+      await saveRememberMe(username, password);
+    } else {
+      await clearRememberMe();
+    }
+
     console.log('Login successful');
 
     return NextResponse.json({ success: true });

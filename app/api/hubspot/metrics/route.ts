@@ -10,9 +10,16 @@ export async function GET() {
     const metrics = calculateMetrics(deals);
     const funnelData = calculatePipelineFunnel(deals, stages);
 
+    // ステージIDからラベルへのマッピングを作成
+    const stageLookup: Record<string, string> = {};
+    stages.forEach((stage: { id: string; label: string }) => {
+      stageLookup[stage.id] = stage.label;
+    });
+
     return NextResponse.json({
       metrics,
       funnelData,
+      stageLookup,
       dealsCount: deals.length,
     });
   } catch (error) {

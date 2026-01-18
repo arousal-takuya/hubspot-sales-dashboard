@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { formatCurrency } from '@/app/lib/analytics';
-import { ExternalLink, Calendar, ChevronDown } from 'lucide-react';
+import { ExternalLink, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 
 interface Deal {
   id: string;
@@ -18,11 +18,44 @@ interface Deal {
 interface DealsTableProps {
   deals: Deal[];
   stageLookup: Map<string, string>;
+  dateFilter: string;
+  onDateFilterChange: (filter: string) => void;
+  totalDealsCount: number;
 }
 
-export default function DealsTable({ deals, stageLookup }: DealsTableProps) {
-  const [dateFilter, setDateFilter] = useState<string>('all');
+type SortKey = 'dealname' | 'dealstage' | 'amount' | 'hs_deal_stage_probability' | 'createdate' | 'closedate';
+type SortOrder = 'asc' | 'desc' | null;
+
+export default function DealsTable({ deals, stageLookup, dateFilter, onDateFilterChange, totalDealsCount }: DealsTableProps) {
   const [visibleCount, setVisibleCount] = useState(20);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      if (sortOrder === 'asc') {
+        setSortOrder('desc');
+      } else if (sortOrder === 'desc') {
+        setSortKey(null);
+        setSortOrder(null);
+      } else {
+        setSortOrder('asc');
+      }
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (sortKey !== key) {
+      return <ChevronsUpDown className="w-3 h-3 ml-1 opacity-50" />;
+    }
+    if (sortOrder === 'asc') {
+      return <ChevronUp className="w-3 h-3 ml-1" />;
+    }
+    return <ChevronDown className="w-3 h-3 ml-1" />;
+  };
 
   const getStageColor = (probability?: number) => {
     if (!probability) return 'bg-slate-600';
@@ -36,66 +69,65 @@ export default function DealsTable({ deals, stageLookup }: DealsTableProps) {
     return `${Math.round(probability * 100)}%`;
   };
 
-  const filteredDeals = useMemo(() => {
-    if (dateFilter === 'all') return deals;
+  // ソートのみ（フィルターは親で処理済み）
+  const sortedDeals = useMemo(() => {
+    if (!sortKey || !sortOrder) return deals;
 
-    const now = new Date();
-    const filterDate = new Date();
+    return [...deals].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
 
-    switch (dateFilter) {
-      case '7days':
-        filterDate.setDate(now.getDate() - 7);
-        break;
-      case '30days':
-        filterDate.setDate(now.getDate() - 30);
-        break;
-      case '90days':
-        filterDate.setDate(now.getDate() - 90);
-        break;
-      case '180days':
-        filterDate.setDate(now.getDate() - 180);
-        break;
-      case '1year':
-        filterDate.setFullYear(now.getFullYear() - 1);
-        break;
-      default:
-        return deals;
-    }
+      switch (sortKey) {
+        case 'dealname':
+          aVal = a.dealname || '';
+          bVal = b.dealname || '';
+          break;
+        case 'dealstage':
+          aVal = stageLookup.get(a.dealstage) || a.dealstage || '';
+          bVal = stageLookup.get(b.dealstage) || b.dealstage || '';
+          break;
+        case 'amount':
+          aVal = a.amount || 0;
+          bVal = b.amount || 0;
+          break;
+        case 'hs_deal_stage_probability':
+          aVal = a.hs_deal_stage_probability || 0;
+          bVal = b.hs_deal_stage_probability || 0;
+          break;
+        case 'createdate':
+          aVal = a.createdate ? new Date(a.createdate).getTime() : 0;
+          bVal = b.createdate ? new Date(b.createdate).getTime() : 0;
+          break;
+        case 'closedate':
+          aVal = a.closedate ? new Date(a.closedate).getTime() : 0;
+          bVal = b.closedate ? new Date(b.closedate).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
 
-    return deals.filter((deal) => {
-      if (!deal.createdate) return false;
-      const createDate = new Date(deal.createdate);
-      return createDate >= filterDate;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        const comparison = aVal.localeCompare(bVal, 'ja');
+        return sortOrder === 'asc' ? comparison : -comparison;
+      }
+
+      if (sortOrder === 'asc') {
+        return aVal - bVal;
+      }
+      return bVal - aVal;
     });
-  }, [deals, dateFilter]);
+  }, [deals, sortKey, sortOrder, stageLookup]);
 
-  const visibleDeals = filteredDeals.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredDeals.length;
+  const visibleDeals = sortedDeals.slice(0, visibleCount);
+  const hasMore = visibleCount < sortedDeals.length;
 
   return (
     <div className="glass-card rounded-2xl overflow-hidden shadow-md">
       <div className="px-6 py-4 border-b border-blue-100 flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-lg font-bold text-slate-900">案件一覧 (AI監査済み)</h3>
-        <div className="flex gap-2 flex-wrap items-center">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-600" />
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-white border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">全期間 ({deals.length}件)</option>
-              <option value="7days">過去7日間</option>
-              <option value="30days">過去30日間</option>
-              <option value="90days">過去90日間</option>
-              <option value="180days">過去180日間</option>
-              <option value="1year">過去1年間</option>
-            </select>
-          </div>
-          <span className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-medium">
-            表示中: {visibleDeals.length}件 / 全{filteredDeals.length}件
-          </span>
-        </div>
+        <span className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-medium">
+          表示中: {visibleDeals.length}件 / 全{deals.length}件
+        </span>
       </div>
 
       <div className="overflow-x-auto">
@@ -103,25 +135,61 @@ export default function DealsTable({ deals, stageLookup }: DealsTableProps) {
           <thead className="bg-gradient-to-r from-blue-50 to-white">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                クライアント
+                <button
+                  onClick={() => handleSort('dealname')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  取引
+                  {getSortIcon('dealname')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                ステージ
+                <button
+                  onClick={() => handleSort('dealstage')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  ステージ
+                  {getSortIcon('dealstage')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                MEDDIC
+                <button
+                  onClick={() => handleSort('hs_deal_stage_probability')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  MEDDIC
+                  {getSortIcon('hs_deal_stage_probability')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                予算金額
+                <button
+                  onClick={() => handleSort('amount')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  予算金額
+                  {getSortIcon('amount')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 AI確度
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                作成日
+                <button
+                  onClick={() => handleSort('createdate')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  作成日
+                  {getSortIcon('createdate')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                完了予定
+                <button
+                  onClick={() => handleSort('closedate')}
+                  className="inline-flex items-center hover:text-blue-600 transition"
+                >
+                  完了予定
+                  {getSortIcon('closedate')}
+                </button>
               </th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
               </th>
@@ -201,7 +269,7 @@ export default function DealsTable({ deals, stageLookup }: DealsTableProps) {
             onClick={() => setVisibleCount(prev => prev + 20)}
             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg inline-flex items-center gap-2"
           >
-            さらに読み込む ({filteredDeals.length - visibleCount}件)
+            さらに読み込む ({sortedDeals.length - visibleCount}件)
             <ChevronDown className="w-4 h-4" />
           </button>
         </div>

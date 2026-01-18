@@ -5,7 +5,8 @@ import MetricCard from './components/MetricCard';
 import PipelineFunnel from './components/PipelineFunnel';
 import DealsTable from './components/DealsTable';
 import { formatCurrency } from './lib/analytics';
-import { LayoutDashboard, AlertTriangle, Sparkles, LogOut, Calendar } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Sparkles, LogOut, Calendar, Target } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
@@ -257,6 +258,13 @@ export default function Dashboard() {
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-green-700">Live</span>
               </div>
+              <Link
+                href="/planning"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <Target className="w-4 h-4" />
+                事業計画
+              </Link>
               <button
                 onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-md hover:shadow-lg"

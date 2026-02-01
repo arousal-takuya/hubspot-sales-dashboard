@@ -1,5 +1,9 @@
 # HubSpot Sales Dashboard - Evidence-Based
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/arousal-takuya/hubspot-sales-dashboard)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22.0.0-blue)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/next.js-15.5-black)](https://nextjs.org/)
+
 HubSpotのCRMデータと連携したエビデンスベース営業管理ダッシュボード
 
 ![Dashboard Preview](https://via.placeholder.com/800x400?text=Dashboard+Preview)

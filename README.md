@@ -185,3 +185,5 @@ MIT
 ## サポート
 
 問題が発生した場合は、GitHubのIssuesで報告してください。
+
+<!-- Test for n8n notification Sun Feb  1 13:57:23 JST 2026 -->
